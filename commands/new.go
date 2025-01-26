@@ -12,8 +12,9 @@ import (
 
 var (
 	newCmd = &cobra.Command{
-		Use:  "new <filename>",
-		Args: cobra.ExactArgs(1),
+		Use:   "new <filename>",
+		Short: "Create a markdown file based on a specific format",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			filename := args[0]
 
