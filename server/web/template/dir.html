@@ -39,11 +39,11 @@
           {{ range .Entries }}
             <tr class="tree__table-row">
               <td class="tree__table-cell">
-                <a class="link" href="./{{ .Name }}">{{ .Name }}</a>
+                <a class="link" href="{{ .URL }}">{{ .Name }}</a>
               </td>
               <td>
                 <div class="tree__table-cell">
-                  2025/01/26 14:28
+                  {{ .UpdatedAt.Format "2006/01/02 15:4" }}
                 </div>
               </td>
             </tr>

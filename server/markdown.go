@@ -2,7 +2,9 @@ package server
 
 import (
 	"bytes"
+	"errors"
 	"html/template"
+	"time"
 
 	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/yuin/goldmark"
@@ -16,7 +18,7 @@ var md = goldmark.New(
 	goldmark.WithExtensions(
 		extension.GFM,
 		extension.CJK,
-		meta.New(meta.WithTable()),
+		meta.Meta,
 		highlighting.NewHighlighting(
 			highlighting.WithStyle("github"),
 			highlighting.WithFormatOptions(
@@ -30,11 +32,44 @@ var md = goldmark.New(
 	),
 )
 
-func MarkDownRender(content []byte) template.HTML {
+func (a *ArticleTmplContext) MarkDown(content []byte) error {
 	var buf bytes.Buffer
+	ctx := parser.NewContext()
 
-	if err := md.Convert(content, &buf); err != nil {
-		panic(err)
+	if err := md.Convert(content, &buf, parser.WithContext(ctx)); err != nil {
+		return err
 	}
-	return template.HTML(buf.String())
+
+	metaData := meta.Get(ctx)
+
+	title, ok := metaData["title"]
+	if !ok {
+		return errors.New("title is not available")
+	}
+
+	strTitle, ok := title.(string)
+	if !ok {
+		return errors.New("title can not assert as string type")
+	}
+
+	date, ok := metaData["date"]
+	if !ok {
+		return errors.New("date is not available")
+	}
+
+	strDate, ok := date.(string)
+	if !ok {
+		return errors.New("date can not assert as string type")
+	}
+
+	d, err := time.Parse(time.RFC3339, strDate)
+	if err != nil {
+		return err
+	}
+
+	a.Title = strTitle
+	a.Date = d
+	a.HTML = template.HTML(buf.String())
+
+	return nil
 }

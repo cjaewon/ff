@@ -55,7 +55,17 @@ func (s *Server) treeHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			d.Entries = append(d.Entries, info)
+			url, err := url.JoinPath(r.URL.Path, info.Name())
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			d.Entries = append(d.Entries, File{
+				Name:      info.Name(),
+				URL:       url,
+				UpdatedAt: info.ModTime(),
+			})
 		}
 
 		relativePaths := strings.Split(relativePath, "/")
@@ -92,8 +102,12 @@ func (s *Server) treeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		a := &ArticleTmplContext{
-			HTML:       MarkDownRender(b),
 			IsMarkDown: true,
+		}
+
+		if err := a.MarkDown(b); err != nil {
+			fmt.Println(err)
+			return
 		}
 
 		a.Write(w)

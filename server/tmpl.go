@@ -17,14 +17,16 @@ var (
 )
 
 type DirTmplContext struct {
-	Entries     []fs.FileInfo
 	RootDirPath string
 	RootDirName string
 	// Pwdf means print working directory or file.
-	Pwdf []Path
+	Pwdf    []Path
+	Entries []File
 }
 
 type ArticleTmplContext struct {
+	Title      string
+	Date       time.Time
 	HTML       template.HTML
 	IsMarkDown bool
 }
