@@ -8,36 +8,27 @@
   <meta name="MobileOptimized" content="320">
   <meta name="viewport" content="width=device-width,minimum-scale=1">
   <title>Document</title>
-  <link href="../assets/common.css" rel="stylesheet" />
+  <link href="/assets/common.css" rel="stylesheet" />
 </head>
 <body>
   <main>
     <div class="hero">
       <div class="hero__root">
-        <img src="../assets/images/file-folder_1f4c1.png">
+        <img src="/assets/images/file-folder_1f4c1.png">
         <div class="hero__root--info">
-          <h1>pnucse</h1>
-          <p>/Users/cjaewon/c/pnucse</p>
+          <h1>{{ .RootDirName }}</h1>
+          <p>{{ .RootDirPath }}</p>
         </div>
       </div>
     </div>
     <div class="tree">
       <div class="tree__navigator">
-        
-          
-          <a class="link" href="/">..</a>
-        
-          
-            <div class="tree__navigator--slash">/</div>
-          
-          <a class="link" href="/c">c</a>
-        
-          
-          <div class="tree__navigator--slash">/</div>
-
-          
-          <a class="link" href="/c/think.md">think.md</a>
-        
+        {{ range $i, $e := .Pwdf }}
+          {{ if ne $i 0 }}
+            <span class="tree__navigator--slash">/</span>
+          {{ end }}
+          <a class="link" href="{{ .URL }}">{{ .Base }}</a>
+        {{ end }}
       </div>
       <table class="tree__table">
         <tbody>
@@ -45,26 +36,18 @@
             <th scope="col" class="tree__table-cell" width="70%">이름</th>
             <th scope="col" class="tree__table-cell" width="30%">날짜</th>
           </tr>
-          <tr class="tree__table-row">
-            <td class="tree__table-cell">
-              <a class="link" href="/.DS_Store">.DS_Store</a>
-            </td>
-            <td>
-              <div class="tree__table-cell">
-                2025/01/26 14:28
-              </div>
-            </td>
-          </tr>
-          <tr class="tree__table-row">
-            <td class="tree__table-cell">
-              <a class="link" href="/.DS_Store">.DS_Store</a>
-            </td>
-            <td>
-              <div class="tree__table-cell">
-                2025/01/26 14:28
-              </div>
-            </td>
-          </tr>
+          {{ range .Entries }}
+            <tr class="tree__table-row">
+              <td class="tree__table-cell">
+                <a class="link" href="./{{ .Name }}">{{ .Name }}</a>
+              </td>
+              <td>
+                <div class="tree__table-cell">
+                  2025/01/26 14:28
+                </div>
+              </td>
+            </tr>
+          {{ end }}
         </tbody>
       </table>
     </div>
