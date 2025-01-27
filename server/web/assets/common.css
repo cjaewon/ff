@@ -29,6 +29,9 @@ body {
   align-items: center;
   border-bottom: 1px solid #E2E8F0;
   padding-bottom: 0.925rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+
 
   img {
     width: 2.45rem;
@@ -153,7 +156,7 @@ body {
   background-color: #f6f8fa;
   padding: 0.625rem 1rem;
   border-radius: 4px;
-  
+
   a { 
     color: #0969da;
   }
