@@ -2,12 +2,16 @@ package server
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/MakeNowJust/heredoc/v2"
 )
 
 type Server struct {
@@ -86,8 +90,14 @@ func (s *Server) treeHandler(w http.ResponseWriter, r *http.Request) {
 		d.Write(w)
 	} else { // stat is file
 		ext := filepath.Ext(absPath)
+
 		if !(ext == ".md" || ext == ".markdown") {
 			a := &ArticleTmplContext{
+				Title: "지원하지 않는 파일 형태 입니다.",
+				Date:  time.Now(),
+				HTML: template.HTML(heredoc.Docf(`
+					<p><strong>"%s"</strong> 를 읽을 수 없습니다.</p>
+				`, filepath.Base(absPath))),
 				IsMarkDown: false,
 			}
 
@@ -119,7 +129,7 @@ func (s *Server) Run() error {
 	http.Handle("/assets/", http.FileServer(http.Dir("./server/web")))
 
 	addr := s.Bind + ":" + strconv.Itoa(s.Port)
-	fmt.Println("Web Server is available at http://" + addr)
+	fmt.Println("Web Server is available at http://" + addr + "/tree")
 
 	if err := http.ListenAndServe(addr, nil); err != nil {
 		return err
