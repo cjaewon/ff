@@ -115,6 +115,9 @@ func (s *Server) treeHandler(w http.ResponseWriter, r *http.Request) {
 			IsMarkDown: true,
 		}
 
+		addr := s.Bind + ":" + strconv.Itoa(s.Port)
+		b = imgRepathize(addr, absPath, b)
+
 		if err := a.MarkDown(b); err != nil {
 			fmt.Println(err)
 			return
@@ -124,8 +127,19 @@ func (s *Server) treeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *Server) imagesHandler(w http.ResponseWriter, r *http.Request) {
+	src := r.URL.Query().Get("src")
+	if src == "" {
+		fmt.Println("src is not found")
+		return
+	}
+
+	http.ServeFile(w, r, src)
+}
+
 func (s *Server) Run() error {
 	http.HandleFunc("/tree/", s.treeHandler)
+	http.HandleFunc("/images", s.imagesHandler)
 	http.Handle("/assets/", http.FileServer(http.Dir("./server/web")))
 
 	addr := s.Bind + ":" + strconv.Itoa(s.Port)

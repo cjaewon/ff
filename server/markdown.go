@@ -3,7 +3,11 @@ package server
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"html/template"
+	"net/url"
+	"path/filepath"
+	"regexp"
 	"time"
 
 	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
@@ -72,4 +76,27 @@ func (a *ArticleTmplContext) MarkDown(content []byte) error {
 	a.HTML = template.HTML(buf.String())
 
 	return nil
+}
+
+// imgRepathize finds all img tag and modifies a path
+func imgRepathize(addr, absPath string, content []byte) []byte {
+	re := regexp.MustCompile(`!\[([^\]]*)\]\(([^)]*)\)`)
+
+	result := re.ReplaceAllFunc(content, func(m []byte) []byte {
+		submatches := re.FindSubmatch(m)
+		if len(submatches) < 3 {
+			return m
+		}
+
+		originalAlt, originalURL := submatches[1], submatches[2]
+
+		dirAbsPath := filepath.Dir(absPath)
+		src := filepath.Join(dirAbsPath, string(originalURL))
+
+		newURL := fmt.Sprintf("http://%s/images?src=%s", addr, url.QueryEscape(src))
+
+		return []byte(fmt.Sprintf("![%s](%s)", originalAlt, newURL))
+	})
+
+	return result
 }
