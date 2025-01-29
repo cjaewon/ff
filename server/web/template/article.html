@@ -10,7 +10,9 @@
   <title>Document</title>
   <link href="/assets/common.css" rel="stylesheet" />
   <link href="/assets/article.css" rel="stylesheet" />
-  <script src="/assets/livereload.js"></script>
+  {{ if .LiveReload }}
+    <script src="/assets/livereload.js"></script>
+  {{ end }}
 </head>
 <body>
   <main>

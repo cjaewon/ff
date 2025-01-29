@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
@@ -89,6 +90,10 @@ func imgRepathize(addr, absPath string, content []byte) []byte {
 		}
 
 		originalAlt, originalURL := submatches[1], submatches[2]
+
+		if strings.Contains(string(originalURL), "http") {
+			return []byte(fmt.Sprintf("![%s](%s)", originalAlt, originalURL))
+		}
 
 		dirAbsPath := filepath.Dir(absPath)
 		src := filepath.Join(dirAbsPath, string(originalURL))

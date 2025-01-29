@@ -74,8 +74,10 @@ func watch() {
 		for conn, info := range watchMap {
 			stat, err := os.Stat(info.AbsPath)
 			if errors.Is(err, os.ErrNotExist) {
-				// todo: conn WriteJSON becase of showing file is not existed
-				// made some 404 page with no websocket connect
+				conn.WriteJSON(Message{
+					Command: "refresh",
+				})
+
 				continue
 			} else if err != nil {
 				fmt.Println(err)

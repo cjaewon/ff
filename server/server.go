@@ -1,8 +1,10 @@
 package server
 
 import (
+	"embed"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
@@ -46,6 +48,7 @@ func (s *Server) treeHandler(w http.ResponseWriter, r *http.Request) {
 		d := &DirTmplContext{
 			RootDirPath: s.RootDirPath,
 			RootDirName: s.RootDirName,
+			LiveReload:  s.Watch,
 		}
 		d.Pwdf = append(d.Pwdf, Path{
 			Base: s.RootDirName,
@@ -99,6 +102,7 @@ func (s *Server) treeHandler(w http.ResponseWriter, r *http.Request) {
 					<p><strong>"%s"</strong> 를 읽을 수 없습니다.</p>
 				`, filepath.Base(absPath))),
 				IsMarkDown: false,
+				LiveReload: s.Watch,
 			}
 
 			a.Write(w)
@@ -137,7 +141,19 @@ func (s *Server) filesHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, src)
 }
 
+var (
+	//go:embed web/assets
+	webAssetsFS embed.FS
+	assetsFs, _ = fs.Sub(webAssetsFS, "web")
+)
+
 func (s *Server) Run() error {
+	fs.WalkDir(assetsFs, ".", func(path string, d fs.DirEntry, err error) error {
+		fmt.Println(path)
+
+		return nil
+	})
+
 	http.HandleFunc("/tree/", s.treeHandler)
 	http.HandleFunc("/files", s.filesHandler)
 
@@ -146,7 +162,7 @@ func (s *Server) Run() error {
 		http.HandleFunc("/livereload", s.liveReloadHandler)
 	}
 
-	http.Handle("/assets/", http.FileServer(http.Dir("./server/web")))
+	http.Handle("/assets/", http.FileServer(http.FS(assetsFs)))
 
 	addr := s.Bind + ":" + strconv.Itoa(s.Port)
 	fmt.Println("Web Server is available at http://" + addr + "/tree")

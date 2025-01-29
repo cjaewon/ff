@@ -20,8 +20,9 @@ type DirTmplContext struct {
 	RootDirPath string
 	RootDirName string
 	// Pwdf means print working directory or file.
-	Pwdf    []Path
-	Entries []File
+	Pwdf       []Path
+	Entries    []File
+	LiveReload bool
 }
 
 type ArticleTmplContext struct {
@@ -29,6 +30,7 @@ type ArticleTmplContext struct {
 	Date       time.Time
 	HTML       template.HTML
 	IsMarkDown bool
+	LiveReload bool
 }
 
 func init() {

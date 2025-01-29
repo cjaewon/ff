@@ -5,7 +5,6 @@ message protocal {
 }
 */
 
-// scrollY must be localized
 const relativePath = window.location.pathname.replace("/tree/", "");
 const ws = new WebSocket(`http://${document.location.host}/livereload?relative-path=${encodeURI(relativePath)}`);
 
