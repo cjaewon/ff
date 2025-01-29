@@ -148,12 +148,6 @@ var (
 )
 
 func (s *Server) Run() error {
-	fs.WalkDir(assetsFs, ".", func(path string, d fs.DirEntry, err error) error {
-		fmt.Println(path)
-
-		return nil
-	})
-
 	http.HandleFunc("/tree/", s.treeHandler)
 	http.HandleFunc("/files", s.filesHandler)
 
