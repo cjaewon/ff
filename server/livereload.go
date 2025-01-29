@@ -1,10 +1,12 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -16,23 +18,17 @@ var upgrader = websocket.Upgrader{
 }
 
 var watchMap = make(map[*websocket.Conn]watchInfo)
+var watchMapMutex sync.Mutex
 
 type watchInfo struct {
 	Time    time.Time
 	AbsPath string
 }
 
-// todo: only one goroutine per conn
 func (s *Server) liveReloadHandler(w http.ResponseWriter, r *http.Request) {
 	// relativePath means "addr/tree/" + relativePath
 	relativePath := r.URL.Query().Get("relative-path")
 	absPath := filepath.Join(s.RootDirPath, relativePath)
-
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
 
 	stat, err := os.Stat(absPath)
 	if err != nil {
@@ -40,35 +36,54 @@ func (s *Server) liveReloadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
 	conn.SetCloseHandler(func(code int, text string) error {
+		watchMapMutex.Lock()
 		delete(watchMap, conn)
+		watchMapMutex.Unlock()
 
 		return nil
 	})
 
+	watchMapMutex.Lock()
 	watchMap[conn] = watchInfo{
 		Time:    stat.ModTime(),
 		AbsPath: absPath,
 	}
-	// todo: watchMap 동시성 처리 mutex
+	watchMapMutex.Unlock()
+
+	go func() {
+		for {
+			if _, _, err := conn.NextReader(); err != nil {
+				conn.Close()
+				break
+			}
+		}
+	}()
 }
 
 func watch() error {
 	for {
+		watchMapMutex.Lock()
+
 		for conn, info := range watchMap {
 			stat, err := os.Stat(info.AbsPath)
-			if err == os.ErrNotExist {
+			if errors.Is(err, os.ErrNotExist) {
 				continue
 			} else if err != nil {
 				return err
 			}
 
 			if stat.ModTime().After(info.Time) {
-				if _, ok := watchMap[conn]; ok {
-					watchMap[conn] = watchInfo{
-						Time:    stat.ModTime(),
-						AbsPath: info.AbsPath,
-					}
+				fmt.Printf("%+v\n%+v\n\n", watchMap, info)
+				watchMap[conn] = watchInfo{
+					Time:    stat.ModTime(),
+					AbsPath: info.AbsPath,
 				}
 
 				conn.WriteJSON(Message{
@@ -76,6 +91,7 @@ func watch() error {
 				})
 			}
 		}
+		watchMapMutex.Unlock()
 
 		time.Sleep(time.Second)
 	}
