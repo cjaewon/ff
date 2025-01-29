@@ -67,20 +67,22 @@ func (s *Server) liveReloadHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 }
 
-func watch() error {
+func watch() {
 	for {
 		watchMapMutex.Lock()
 
 		for conn, info := range watchMap {
 			stat, err := os.Stat(info.AbsPath)
 			if errors.Is(err, os.ErrNotExist) {
+				// todo: conn WriteJSON becase of showing file is not existed
+				// made some 404 page with no websocket connect
 				continue
 			} else if err != nil {
-				return err
+				fmt.Println(err)
+				continue
 			}
 
 			if stat.ModTime().After(info.Time) {
-				fmt.Printf("%+v\n%+v\n\n", watchMap, info)
 				watchMap[conn] = watchInfo{
 					Time:    stat.ModTime(),
 					AbsPath: info.AbsPath,
