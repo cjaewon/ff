@@ -25,7 +25,7 @@ func (s *Server) liveReloadHandler(w http.ResponseWriter, r *http.Request) {
 	// relativePath means "addr/tree/" + relativePath
 	relativePath := r.URL.Query().Get("relative-path")
 	absPath := filepath.Join(s.RootDirPath, relativePath)
-	fmt.Println(absPath)
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println(err)
@@ -33,7 +33,7 @@ func (s *Server) liveReloadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if connsByPath[absPath] == nil {
-		connsByPath[absPath] = map[*websocket.Conn]bool{}
+		connsByPath[absPath] = make(map[*websocket.Conn]bool)
 	}
 
 	connsByPath[absPath][conn] = true
@@ -62,8 +62,7 @@ func (s *Server) liveReloadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func watch(dirPath string) error {
-	fmt.Println(dirPath)
+func watch(dirAbsPath string) error {
 	go func() {
 		for {
 			select {
@@ -75,12 +74,10 @@ func watch(dirPath string) error {
 
 				// todo : fsnotify.Rename must add watch again
 				if event.Has(fsnotify.Write) || event.Has(fsnotify.Remove) || event.Has(fsnotify.Create) || event.Has(fsnotify.Rename) {
-					fmt.Println(connsByPath)
-					// todo: filepath.Dir
-					// not only file but also dir
 					for conn := range connsByPath[event.Name] {
-						fmt.Println("send!")
-						fmt.Println(conn.WriteMessage(websocket.TextMessage, []byte("write"+event.Name)))
+						conn.WriteJSON(Message{
+							Command: "refresh",
+						})
 					}
 				}
 			case err, ok := <-watcher.Errors:
@@ -94,7 +91,7 @@ func watch(dirPath string) error {
 
 	count := 0
 
-	err := filepath.WalkDir(dirPath, func(path string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(dirAbsPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -116,4 +113,9 @@ func watch(dirPath string) error {
 	})
 
 	return err
+}
+
+type Message struct {
+	Command string `json:"command"`
+	Data    string `json:"data"`
 }
