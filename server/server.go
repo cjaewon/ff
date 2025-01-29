@@ -117,6 +117,7 @@ func (s *Server) treeHandler(w http.ResponseWriter, r *http.Request) {
 
 		a := &ArticleTmplContext{
 			IsMarkDown: true,
+			LiveReload: s.Watch,
 		}
 
 		addr := s.Bind + ":" + strconv.Itoa(s.Port)
