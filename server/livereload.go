@@ -2,12 +2,11 @@ package server
 
 import (
 	"fmt"
-	"io/fs"
-	"log"
 	"net/http"
+	"os"
 	"path/filepath"
+	"time"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/gorilla/websocket"
 )
 
@@ -16,11 +15,14 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-var watcher *fsnotify.Watcher
-var connsByPath = make(map[string]map[*websocket.Conn]bool)
+var watchMap = make(map[*websocket.Conn]watchInfo)
+
+type watchInfo struct {
+	Time    time.Time
+	AbsPath string
+}
 
 // todo: only one goroutine per conn
-
 func (s *Server) liveReloadHandler(w http.ResponseWriter, r *http.Request) {
 	// relativePath means "addr/tree/" + relativePath
 	relativePath := r.URL.Query().Get("relative-path")
@@ -32,87 +34,52 @@ func (s *Server) liveReloadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if connsByPath[absPath] == nil {
-		connsByPath[absPath] = make(map[*websocket.Conn]bool)
+	stat, err := os.Stat(absPath)
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
 
-	connsByPath[absPath][conn] = true
-
-	for {
-		messageType, p, err := conn.ReadMessage()
-		if err != nil {
-			delete(connsByPath[absPath], conn)
-
-			if len(connsByPath[absPath]) == 0 {
-				delete(connsByPath, absPath)
-			}
-
-			return
-		}
-
-		if err := conn.WriteMessage(messageType, p); err != nil {
-			delete(connsByPath[absPath], conn)
-
-			if len(connsByPath[absPath]) == 0 {
-				delete(connsByPath, absPath)
-			}
-
-			return
-		}
-	}
-}
-
-func watch(dirAbsPath string) error {
-	go func() {
-		for {
-			select {
-			case event, ok := <-watcher.Events:
-				if !ok {
-					return
-				}
-				log.Println("event:", event)
-
-				// todo : fsnotify.Rename must add watch again
-				if event.Has(fsnotify.Write) || event.Has(fsnotify.Remove) || event.Has(fsnotify.Create) || event.Has(fsnotify.Rename) {
-					for conn := range connsByPath[event.Name] {
-						conn.WriteJSON(Message{
-							Command: "refresh",
-						})
-					}
-				}
-			case err, ok := <-watcher.Errors:
-				if !ok {
-					return
-				}
-				log.Println("error:", err)
-			}
-		}
-	}()
-
-	count := 0
-
-	err := filepath.WalkDir(dirAbsPath, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if d.IsDir() {
-			if err := watcher.Add(path); err != nil {
-				return err
-			}
-		}
-
-		count += 1
-
-		if count > 30 {
-			// todo: panic -> warn -> y/n
-			panic("there is too many directory for watching")
-		}
+	conn.SetCloseHandler(func(code int, text string) error {
+		delete(watchMap, conn)
 
 		return nil
 	})
 
-	return err
+	watchMap[conn] = watchInfo{
+		Time:    stat.ModTime(),
+		AbsPath: absPath,
+	}
+	// todo: watchMap 동시성 처리 mutex
+}
+
+func watch() error {
+	for {
+		for conn, info := range watchMap {
+			stat, err := os.Stat(info.AbsPath)
+			if err == os.ErrNotExist {
+				continue
+			} else if err != nil {
+				return err
+			}
+
+			if stat.ModTime().After(info.Time) {
+				if _, ok := watchMap[conn]; ok {
+					watchMap[conn] = watchInfo{
+						Time:    stat.ModTime(),
+						AbsPath: info.AbsPath,
+					}
+				}
+
+				conn.WriteJSON(Message{
+					Command: "refresh",
+				})
+			}
+		}
+
+		time.Sleep(time.Second)
+	}
+
 }
 
 type Message struct {

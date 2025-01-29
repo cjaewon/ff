@@ -16,3 +16,5 @@ func main() {
 		os.Exit(1)
 	}
 }
+
+// todo fix http image file

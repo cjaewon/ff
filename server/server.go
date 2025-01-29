@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc/v2"
-	"github.com/fsnotify/fsnotify"
 )
 
 type Server struct {
@@ -143,17 +142,8 @@ func (s *Server) Run() error {
 	http.HandleFunc("/files", s.filesHandler)
 
 	if s.Watch {
-		var err error
-
-		watcher, err = fsnotify.NewWatcher()
-		if err != nil {
-			panic(err)
-		}
-
-		watch(s.RootDirPath)
+		go watch()
 		http.HandleFunc("/livereload", s.liveReloadHandler)
-
-		defer watcher.Close()
 	}
 
 	http.Handle("/assets/", http.FileServer(http.Dir("./server/web")))
