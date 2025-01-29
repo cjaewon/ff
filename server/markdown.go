@@ -93,7 +93,7 @@ func imgRepathize(addr, absPath string, content []byte) []byte {
 		dirAbsPath := filepath.Dir(absPath)
 		src := filepath.Join(dirAbsPath, string(originalURL))
 
-		newURL := fmt.Sprintf("http://%s/images?src=%s", addr, url.QueryEscape(src))
+		newURL := fmt.Sprintf("http://%s/files?src=%s", addr, url.QueryEscape(src))
 
 		return []byte(fmt.Sprintf("![%s](%s)", originalAlt, newURL))
 	})

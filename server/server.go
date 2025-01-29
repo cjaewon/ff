@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc/v2"
+	"github.com/fsnotify/fsnotify"
 )
 
 type Server struct {
@@ -127,7 +128,7 @@ func (s *Server) treeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) imagesHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) filesHandler(w http.ResponseWriter, r *http.Request) {
 	src := r.URL.Query().Get("src")
 	if src == "" {
 		fmt.Println("src is not found")
@@ -139,7 +140,22 @@ func (s *Server) imagesHandler(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) Run() error {
 	http.HandleFunc("/tree/", s.treeHandler)
-	http.HandleFunc("/images", s.imagesHandler)
+	http.HandleFunc("/files", s.filesHandler)
+
+	if s.Watch {
+		var err error
+
+		watcher, err = fsnotify.NewWatcher()
+		if err != nil {
+			panic(err)
+		}
+
+		watch(s.RootDirPath)
+		http.HandleFunc("/livereload", s.liveReloadHandler)
+
+		defer watcher.Close()
+	}
+
 	http.Handle("/assets/", http.FileServer(http.Dir("./server/web")))
 
 	addr := s.Bind + ":" + strconv.Itoa(s.Port)
