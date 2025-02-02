@@ -1,5 +1,5 @@
 /**
-dd is a markdown viewer created specifically for my personal use.
+ff is a markdown viewer created specifically for my personal use.
 Every setting is adjusted to fit my workflow.
 **/
 
@@ -8,7 +8,7 @@ package main
 import (
 	"os"
 
-	"github.com/cjaewon/dd/commands"
+	"github.com/cjaewon/ff/commands"
 )
 
 func main() {
