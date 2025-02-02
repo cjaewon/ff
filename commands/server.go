@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cjaewon/dd/server"
+	"github.com/cjaewon/ff/server"
 	"github.com/spf13/cobra"
 )
 

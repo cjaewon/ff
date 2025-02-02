@@ -1,8 +1,8 @@
 ---
-title: "dd architecture"
+title: "ff architecture"
 date: 2025-01-30T01:46:03+09:00
 ---
-추후 복기를 위한 dd 내부 구현에 대한 설명 입니다.
+추후 복기를 위한 ff 내부 구현에 대한 설명 입니다.
 
 ## ./main.go, ./commands
 cli 구현을 위해 spf13/cobra를 사용합니다.  
