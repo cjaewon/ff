@@ -139,7 +139,13 @@ func (s *Server) filesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.ServeFile(w, r, src)
+	unescaped, err := url.QueryUnescape(src)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	http.ServeFile(w, r, unescaped)
 }
 
 var (
