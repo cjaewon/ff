@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sync"
@@ -27,7 +28,13 @@ type watchInfo struct {
 
 func (s *Server) liveReloadHandler(w http.ResponseWriter, r *http.Request) {
 	// relativePath means "addr/tree/" + relativePath
-	relativePath := r.URL.Query().Get("relative-path")
+	relativePathQuery := r.URL.Query().Get("relative-path")
+	relativePath, err := url.QueryUnescape(relativePathQuery)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
 	absPath := filepath.Join(s.RootDirPath, relativePath)
 
 	stat, err := os.Stat(absPath)
