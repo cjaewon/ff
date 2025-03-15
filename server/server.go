@@ -1,6 +1,7 @@
 package server
 
 import (
+	"database/sql"
 	"embed"
 	"fmt"
 	"html/template"
@@ -96,8 +97,14 @@ func (s *Server) treeHandler(w http.ResponseWriter, r *http.Request) {
 
 		if !(ext == ".md" || ext == ".markdown") {
 			a := &ArticleTmplContext{
-				Title: "지원하지 않는 파일 형태 입니다.",
-				Date:  time.Now(),
+				Title: sql.NullString{
+					String: "지원하지 않는 파일 형태입니다.",
+					Valid:  true,
+				},
+				Date: sql.NullTime{
+					Time:  time.Now(),
+					Valid: true,
+				},
 				HTML: template.HTML(heredoc.Docf(`
 					<p><strong>"%s"</strong> 를 읽을 수 없습니다.</p>
 				`, filepath.Base(absPath))),

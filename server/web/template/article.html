@@ -19,10 +19,15 @@
   <main>
     <article class="article-page">
       <header class="article-page__header">
-        <h1>{{ .Title }}</h1>
-        <p class="article-page__header--footer">
-          <span class="article-page__header--date">{{ .Date.Format "January 2, 2006" }}</span>
-        </p>
+        {{ if .Title.Valid }}
+          <h1>{{ .Title.String }}</h1>
+        {{ end }}
+        {{ if .Date.Valid }}
+          <p class="article-page__header--footer">
+            <span class="article-page__header--date">{{ .Date.Time.Format "January 2, 2006" }}</span>
+          </p>
+        {{ end }}
+
       </header>
       <main class="article-page__content">
         {{ .HTML }}

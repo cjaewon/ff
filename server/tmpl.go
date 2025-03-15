@@ -1,6 +1,7 @@
 package server
 
 import (
+	"database/sql"
 	"embed"
 	"fmt"
 	"html/template"
@@ -26,8 +27,8 @@ type DirTmplContext struct {
 }
 
 type ArticleTmplContext struct {
-	Title      string
-	Date       time.Time
+	Title      sql.NullString
+	Date       sql.NullTime
 	HTML       template.HTML
 	IsMarkDown bool
 	LiveReload bool

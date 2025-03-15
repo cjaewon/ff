@@ -2,7 +2,7 @@ package server
 
 import (
 	"bytes"
-	"errors"
+	"database/sql"
 	"fmt"
 	"html/template"
 	"net/url"
@@ -37,9 +37,7 @@ var md = goldmark.New(
 	),
 )
 
-func (a *ArticleTmplContext) MarkDown(content []byte) error {
-	var buf bytes.Buffer
-	ctx := parser.NewContext()
+/*
 
 	if err := md.Convert(content, &buf, parser.WithContext(ctx)); err != nil {
 		return err
@@ -71,9 +69,43 @@ func (a *ArticleTmplContext) MarkDown(content []byte) error {
 	if err != nil {
 		return err
 	}
+*/
 
-	a.Title = strTitle
-	a.Date = d
+func (a *ArticleTmplContext) MarkDown(content []byte) error {
+	var buf bytes.Buffer
+	ctx := parser.NewContext()
+
+	if err := md.Convert(content, &buf, parser.WithContext(ctx)); err != nil {
+		return err
+	}
+
+	metaData := meta.Get(ctx)
+
+	var (
+		title sql.NullString
+		date  sql.NullTime
+	)
+
+	titleStr, ok := metaData["title"].(string)
+	title.Valid = ok
+
+	if title.Valid {
+		title.String = titleStr
+	}
+
+	dateStr, ok := metaData["date"].(string)
+	date.Valid = ok
+
+	if date.Valid {
+		parsedTime, err := time.Parse(time.RFC3339, dateStr)
+		if err != nil {
+			return err
+		}
+		date.Time = parsedTime
+	}
+
+	a.Title = title
+	a.Date = date
 	a.HTML = template.HTML(buf.String())
 
 	return nil
