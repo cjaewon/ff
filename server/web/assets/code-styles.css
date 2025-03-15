@@ -1,3 +1,4 @@
+pre { overflow-x: auto; }
 /* Background */ .bg { background-color: #ffffff; }
 /* PreWrapper */ .chroma { background-color: #ffffff; }
 /* Error */ .chroma .err { color: #f6f8fa; background-color: #82071e }

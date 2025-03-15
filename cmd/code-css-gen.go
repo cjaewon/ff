@@ -22,6 +22,8 @@ func main() {
 	}
 	defer f.Close()
 
+	f.WriteString("pre { overflow-x: auto; }\n")
+
 	err = formatter.WriteCSS(f, style)
 	if err != nil {
 		log.Fatalf("CSS 작성 오류: %v", err)
