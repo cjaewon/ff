@@ -4,6 +4,11 @@ Every setting is adjusted to fit my workflow.
 
 개인용 마크다운 뷰어
 
+```sh
+$ go install
+$ ff server <directory path>
+```
+
 [ARCHITECTURE-ko.md (내부구현 설명)](https://github.com/cjaewon/ff/blob/main/ARCHITECTURE-ko.md)
 
 video:   
