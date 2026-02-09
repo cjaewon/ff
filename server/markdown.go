@@ -19,6 +19,21 @@ import (
 	"github.com/yuin/goldmark/parser"
 )
 
+var (
+	katexDelimiterEscaper = strings.NewReplacer(
+		`\(`, `FFKATEXLPARENZZ`,
+		`\)`, `FFKATEXRPARENZZ`,
+		`\[`, `FFKATEXLBRACKETZZ`,
+		`\]`, `FFKATEXRBRACKETZZ`,
+	)
+	katexDelimiterRestorer = strings.NewReplacer(
+		`FFKATEXLPARENZZ`, `\(`,
+		`FFKATEXRPARENZZ`, `\)`,
+		`FFKATEXLBRACKETZZ`, `\[`,
+		`FFKATEXRBRACKETZZ`, `\]`,
+	)
+)
+
 var md = goldmark.New(
 	goldmark.WithExtensions(
 		extension.GFM,
@@ -75,6 +90,9 @@ func (a *ArticleTmplContext) MarkDown(content []byte) error {
 	var buf bytes.Buffer
 	ctx := parser.NewContext()
 
+	// Preserve KaTeX \(...\), \[...\] delimiters that goldmark would unescape.
+	content = []byte(katexDelimiterEscaper.Replace(string(content)))
+
 	if err := md.Convert(content, &buf, parser.WithContext(ctx)); err != nil {
 		return err
 	}
@@ -106,7 +124,7 @@ func (a *ArticleTmplContext) MarkDown(content []byte) error {
 
 	a.Title = title
 	a.Date = date
-	a.HTML = template.HTML(buf.String())
+	a.HTML = template.HTML(katexDelimiterRestorer.Replace(buf.String()))
 
 	return nil
 }
